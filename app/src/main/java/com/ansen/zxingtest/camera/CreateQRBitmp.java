@@ -19,19 +19,27 @@ import java.util.Hashtable;
  */
 
 public class CreateQRBitmp {
-    /** 生成二维码图片大小 */
-    private static  int QRCODE_SIZE = 300;
-    /** 头像图片大小 */
-    private static  int PORTRAIT_SIZE = 55;
-    /** 头像图片 */
-    private Bitmap portrait;
     /**
-     *  功能:创建QR二维码图片
-     *  可设置图片大小和头像图片大小
-     *  @param portrait 头像bitmap
-     *  @param content 生成二维码内容数据
+     * 生成二维码图片大小
      */
-    public static Bitmap createQRCodeBitmap(String content, Bitmap portrait,int widthAndHeight,int portraitSize) {
+    private static int QRCODE_SIZE = 300;
+    /**
+     * 头像图片大小
+     */
+    private static int PORTRAIT_SIZE = 55;
+    /**
+     * 头像图片
+     */
+    private Bitmap portrait;
+
+    /**
+     * 功能:创建QR二维码图片
+     * 可设置图片大小和头像图片大小
+     *
+     * @param portrait 头像bitmap
+     * @param content  生成二维码内容数据
+     */
+    public static Bitmap createQRCodeBitmap(String content, Bitmap portrait, int widthAndHeight, int portraitSize) {
         QRCODE_SIZE = widthAndHeight;
         PORTRAIT_SIZE = portraitSize;
         // 用于设置QR二维码参数
@@ -65,8 +73,8 @@ public class CreateQRBitmp {
             Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
             // 将上面的二维码颜色数组传入，生成图片颜色
             bitmap.setPixels(data, 0, w, 0, 0, w, h);
-            if(portrait!=null){
-                createQRCodeBitmapWithPortrait(bitmap,initProtrait(portrait));
+            if (portrait != null) {
+                createQRCodeBitmapWithPortrait(bitmap, initProtrait(portrait));
             }
             return bitmap;
         } catch (WriterException e) {
@@ -74,13 +82,15 @@ public class CreateQRBitmp {
         }
         return null;
     }
+
     /**
-     *  功能:创建QR二维码图片
-     *  头像图片大小默认
-     *  @param portrait 头像bitmap
-     *  @param content 生成二维码内容数据
+     * 功能:创建QR二维码图片
+     * 头像图片大小默认
+     *
+     * @param portrait 头像bitmap
+     * @param content  生成二维码内容数据
      */
-    public static Bitmap createQRCodeBitmap(String content,Bitmap portrait) {
+    public static Bitmap createQRCodeBitmap(String content, Bitmap portrait) {
         // 用于设置QR二维码参数
         Hashtable<EncodeHintType, Object> qrParam = new Hashtable<>();
         // 设置QR二维码的纠错级别——这里选择最高H级别
@@ -112,8 +122,8 @@ public class CreateQRBitmp {
             Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
             // 将上面的二维码颜色数组传入，生成图片颜色
             bitmap.setPixels(data, 0, w, 0, 0, w, h);
-            if(portrait!=null){//添加最中间的logo
-                createQRCodeBitmapWithPortrait(bitmap,initProtrait(portrait));
+            if (portrait != null) {//添加最中间的logo
+                createQRCodeBitmapWithPortrait(bitmap, initProtrait(portrait));
             }
             return bitmap;
         } catch (WriterException e) {

@@ -2,9 +2,7 @@ package com.ansen.zxingtest.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Environment;
 import android.util.Log;
-import android.view.View;
 
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.ChecksumException;
@@ -28,17 +26,18 @@ import java.util.Map;
 public class BitmapUtil {
     /**
      * 解析二维码图片
+     *
      * @param bitmapPath 文件路径
      * @return
      */
-    public static String parseQRcode(String bitmapPath){
+    public static String parseQRcode(String bitmapPath) {
         Bitmap bitmap = BitmapFactory.decodeFile(bitmapPath, null);
-        String result=parseQRcode(bitmap);
+        String result = parseQRcode(bitmap);
         return result;
     }
 
-    public static String parseQRcode(Bitmap bmp){
-        bmp=comp(bmp);//bitmap压缩  如果不压缩的话在低配置的手机上解码很慢
+    public static String parseQRcode(Bitmap bmp) {
+        bmp = comp(bmp);//bitmap压缩  如果不压缩的话在低配置的手机上解码很慢
 
         int width = bmp.getWidth();//图片宽度
         int height = bmp.getHeight();//图片高度
@@ -48,12 +47,12 @@ public class BitmapUtil {
         QRCodeReader reader = new QRCodeReader();
         Map<DecodeHintType, Object> hints = new EnumMap<>(DecodeHintType.class);
         hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);//优化精度
-        hints.put(DecodeHintType.CHARACTER_SET,"utf-8");//解码设置编码方式为：utf-8
+        hints.put(DecodeHintType.CHARACTER_SET, "utf-8");//解码设置编码方式为：utf-8
         try {
             Result result = reader.decode(new BinaryBitmap(new HybridBinarizer(new RGBLuminanceSource(width, height, pixels))), hints);
             return result.getText();
         } catch (NotFoundException e) {
-            Log.i("ansen",""+e.toString());
+            Log.i("ansen", "" + e.toString());
             e.printStackTrace();
         } catch (ChecksumException e) {
             e.printStackTrace();
@@ -67,7 +66,7 @@ public class BitmapUtil {
     private static Bitmap comp(Bitmap image) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        if( baos.toByteArray().length / 1024>1024) {//判断如果图片大于1M,进行压缩避免在生成图片（BitmapFactory.decodeStream）时溢出
+        if (baos.toByteArray().length / 1024 > 1024) {//判断如果图片大于1M,进行压缩避免在生成图片（BitmapFactory.decodeStream）时溢出
             baos.reset();//重置baos即清空baos
             image.compress(Bitmap.CompressFormat.JPEG, 50, baos);//这里压缩50%，把压缩后的数据存放到baos中
         }
@@ -103,7 +102,7 @@ public class BitmapUtil {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         image.compress(Bitmap.CompressFormat.JPEG, 100, baos);//质量压缩方法，这里100表示不压缩，把压缩后的数据存放到baos中
         int options = 100;
-        while (baos.toByteArray().length/1024>100) { //循环判断如果压缩后图片是否大于100kb,大于继续压缩
+        while (baos.toByteArray().length / 1024 > 100) { //循环判断如果压缩后图片是否大于100kb,大于继续压缩
             baos.reset();//重置baos即清空baos
             image.compress(Bitmap.CompressFormat.JPEG, options, baos);//这里压缩options%，把压缩后的数据存放到baos中
             options -= 10;//每次都减少10

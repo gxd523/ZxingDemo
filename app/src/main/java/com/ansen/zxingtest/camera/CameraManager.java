@@ -38,99 +38,6 @@ public final class CameraManager {
     private static final int MAX_FRAME_SIZE = 1000;
     private static final int MIN_PREVIEW_PIXELS = 470 * 320; // normal screen
     private static final int MAX_PREVIEW_PIXELS = 1280 * 720;
-
-    private Camera camera;
-    private Camera.Size cameraResolution;
-    private Rect frame;
-    private Rect framePreview;
-
-    public Rect getFrame() {
-        return frame;
-    }
-
-    public Rect getFramePreview() {
-        return framePreview;
-    }
-
-    public Camera open(final SurfaceHolder holder,
-                       final boolean continuousAutoFocus) throws IOException {
-        // try back-facing camera
-        camera = Camera.open();
-
-        // fall back to using front-facing camera
-        if (camera == null) {
-            final int cameraCount = Camera.getNumberOfCameras();
-            final CameraInfo cameraInfo = new CameraInfo();
-
-            // search for front-facing camera
-            for (int i = 0; i < cameraCount; i++) {
-                Camera.getCameraInfo(i, cameraInfo);
-                if (cameraInfo.facing == CameraInfo.CAMERA_FACING_FRONT) {
-                    camera = Camera.open(i);
-                    break;
-                }
-            }
-        }
-
-        camera.setDisplayOrientation(90);
-        camera.setPreviewDisplay(holder);
-
-        final Camera.Parameters parameters = camera.getParameters();
-
-        final Rect surfaceFrame = holder.getSurfaceFrame();
-        cameraResolution = findBestPreviewSizeValue(parameters, surfaceFrame);
-
-        final int surfaceWidth = surfaceFrame.width();
-        final int surfaceHeight = surfaceFrame.height();
-
-        final int rawSize = Math.min(surfaceWidth * 4 / 5,
-                surfaceHeight * 4 / 5);
-        final int frameSize = Math.max(MIN_FRAME_SIZE,
-                Math.min(MAX_FRAME_SIZE, rawSize));
-
-        final int leftOffset = (surfaceWidth - frameSize) / 2;
-        final int topOffset = (surfaceHeight - frameSize) / 2;
-        frame = new Rect(leftOffset, topOffset, leftOffset + frameSize,
-                topOffset + frameSize);
-        framePreview = new Rect(frame.left * cameraResolution.height
-                / surfaceWidth, frame.top * cameraResolution.width
-                / surfaceHeight, frame.right * cameraResolution.height
-                / surfaceWidth, frame.bottom * cameraResolution.width
-                / surfaceHeight);
-
-        final String savedParameters = parameters == null ? null : parameters
-                .flatten();
-
-        try {
-            setDesiredCameraParameters(camera, cameraResolution,
-                    continuousAutoFocus);
-        } catch (final RuntimeException x) {
-            if (savedParameters != null) {
-                final Camera.Parameters parameters2 = camera.getParameters();
-                parameters2.unflatten(savedParameters);
-                try {
-                    camera.setParameters(parameters2);
-                    setDesiredCameraParameters(camera, cameraResolution,
-                            continuousAutoFocus);
-                } catch (final RuntimeException x2) {
-                    Log.i("problem setting camera parameters",x2.toString());
-                }
-            }
-        }
-
-        camera.startPreview();
-
-        return camera;
-    }
-
-    public void close() {
-        if (camera != null) {
-            camera.stopPreview();
-            camera.release();
-            camera = null;
-        }
-    }
-
     private static final Comparator<Camera.Size> numPixelComparator = new Comparator<Camera.Size>() {
         @Override
         public int compare(final Camera.Size size1, final Camera.Size size2) {
@@ -145,6 +52,10 @@ public final class CameraManager {
                 return 0;
         }
     };
+    private Camera camera;
+    private Camera.Size cameraResolution;
+    private Rect frame;
+    private Rect framePreview;
 
     private static Camera.Size findBestPreviewSizeValue(
             final Camera.Parameters parameters, Rect surfaceResolution) {
@@ -227,31 +138,6 @@ public final class CameraManager {
         camera.setParameters(parameters);
     }
 
-    public void requestPreviewFrame(final PreviewCallback callback) {
-        camera.setOneShotPreviewCallback(callback);
-    }
-
-    public PlanarYUVLuminanceSource buildLuminanceSource(final byte[] data) {
-        return new PlanarYUVLuminanceSource(data, cameraResolution.width,
-                cameraResolution.height, framePreview.top, framePreview.left,
-                framePreview.height(), framePreview.width(), false);
-    }
-
-    public void setTorch(final boolean enabled) {
-        if(camera == null){
-            return;
-        }
-        if (enabled != getTorchEnabled(camera))
-            setTorchEnabled(camera, enabled);
-    }
-
-    public boolean torchEnabled() {
-        if(camera == null){
-            return false;
-        }
-        return getTorchEnabled(camera);
-    }
-
     private static boolean getTorchEnabled(final Camera camera) {
         final Camera.Parameters parameters = camera.getParameters();
         if (parameters != null) {
@@ -296,5 +182,117 @@ public final class CameraManager {
                 return valueToFind;
 
         return null;
+    }
+
+    public Rect getFrame() {
+        return frame;
+    }
+
+    public Rect getFramePreview() {
+        return framePreview;
+    }
+
+    public Camera open(final SurfaceHolder holder,
+                       final boolean continuousAutoFocus) throws IOException {
+        // try back-facing camera
+        camera = Camera.open();
+
+        // fall back to using front-facing camera
+        if (camera == null) {
+            final int cameraCount = Camera.getNumberOfCameras();
+            final CameraInfo cameraInfo = new CameraInfo();
+
+            // search for front-facing camera
+            for (int i = 0; i < cameraCount; i++) {
+                Camera.getCameraInfo(i, cameraInfo);
+                if (cameraInfo.facing == CameraInfo.CAMERA_FACING_FRONT) {
+                    camera = Camera.open(i);
+                    break;
+                }
+            }
+        }
+
+        camera.setDisplayOrientation(90);
+        camera.setPreviewDisplay(holder);
+
+        final Camera.Parameters parameters = camera.getParameters();
+
+        final Rect surfaceFrame = holder.getSurfaceFrame();
+        cameraResolution = findBestPreviewSizeValue(parameters, surfaceFrame);
+
+        final int surfaceWidth = surfaceFrame.width();
+        final int surfaceHeight = surfaceFrame.height();
+
+        final int rawSize = Math.min(surfaceWidth * 4 / 5,
+                surfaceHeight * 4 / 5);
+        final int frameSize = Math.max(MIN_FRAME_SIZE,
+                Math.min(MAX_FRAME_SIZE, rawSize));
+
+        final int leftOffset = (surfaceWidth - frameSize) / 2;
+        final int topOffset = (surfaceHeight - frameSize) / 2;
+        frame = new Rect(leftOffset, topOffset, leftOffset + frameSize,
+                topOffset + frameSize);
+        framePreview = new Rect(frame.left * cameraResolution.height
+                / surfaceWidth, frame.top * cameraResolution.width
+                / surfaceHeight, frame.right * cameraResolution.height
+                / surfaceWidth, frame.bottom * cameraResolution.width
+                / surfaceHeight);
+
+        final String savedParameters = parameters == null ? null : parameters
+                .flatten();
+
+        try {
+            setDesiredCameraParameters(camera, cameraResolution,
+                    continuousAutoFocus);
+        } catch (final RuntimeException x) {
+            if (savedParameters != null) {
+                final Camera.Parameters parameters2 = camera.getParameters();
+                parameters2.unflatten(savedParameters);
+                try {
+                    camera.setParameters(parameters2);
+                    setDesiredCameraParameters(camera, cameraResolution,
+                            continuousAutoFocus);
+                } catch (final RuntimeException x2) {
+                    Log.i("problem setting camera parameters", x2.toString());
+                }
+            }
+        }
+
+        camera.startPreview();
+
+        return camera;
+    }
+
+    public void close() {
+        if (camera != null) {
+            camera.stopPreview();
+            camera.release();
+            camera = null;
+        }
+    }
+
+    public void requestPreviewFrame(final PreviewCallback callback) {
+        camera.setOneShotPreviewCallback(callback);
+    }
+
+    public PlanarYUVLuminanceSource buildLuminanceSource(final byte[] data) {
+        return new PlanarYUVLuminanceSource(data, cameraResolution.width,
+                cameraResolution.height, framePreview.top, framePreview.left,
+                framePreview.height(), framePreview.width(), false);
+    }
+
+    public void setTorch(final boolean enabled) {
+        if (camera == null) {
+            return;
+        }
+        if (enabled != getTorchEnabled(camera))
+            setTorchEnabled(camera, enabled);
+    }
+
+    public boolean torchEnabled() {
+        if (camera == null) {
+            return false;
+        }
+        return getTorchEnabled(camera);
     }
 }

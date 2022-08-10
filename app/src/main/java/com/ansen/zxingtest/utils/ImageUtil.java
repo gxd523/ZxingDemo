@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Environment;
-import android.text.TextUtils;
 import android.util.Log;
 
 import java.io.File;
@@ -17,7 +16,8 @@ import java.io.FileOutputStream;
  */
 public class ImageUtil {
     public static void savePicToLocal(Bitmap bitmap, Context context) {
-        String filePath=Environment.getExternalStorageDirectory().getAbsolutePath() + "/screen"+File.separator + System.currentTimeMillis() + ".png";
+        String filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/screen" + File.separator + System.currentTimeMillis() +
+                ".png";
         if (bitmap != null) {
             try {
                 // 图片文件路径
