@@ -6,9 +6,12 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -19,7 +22,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 import com.ansen.zxingtest.R;
-import com.ansen.zxingtest.camera.CreateQRBitmp;
+import com.ansen.zxingtest.camera.QrBitmapCreator;
 import com.ansen.zxingtest.dialog.ImageOptDialog;
 import com.ansen.zxingtest.utils.BitmapUtil;
 import com.ansen.zxingtest.utils.ImageUtil;
@@ -31,7 +34,7 @@ public class MainActivity extends Activity {
     private EditText etInput;
     private Bitmap qrCodeBitmap;
     private ImageView ivQrImage;
-    private View.OnClickListener onClickListener = new View.OnClickListener() {
+    private final View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             switch (v.getId()) {
@@ -54,7 +57,7 @@ public class MainActivity extends Activity {
                     Log.i("ansen", "输入的内容:" + contentString);
                     Bitmap portrait = BitmapFactory.decodeResource(getResources(), android.R.mipmap.sym_def_app_icon);
                     //两个方法，一个不传大小，使用默认
-                    qrCodeBitmap = CreateQRBitmp.createQRCodeBitmap(contentString, portrait);
+                    qrCodeBitmap = QrBitmapCreator.createQRCodeBitmap(contentString, portrait);
                     ivQrImage.setImageBitmap(qrCodeBitmap);
                     break;
                 case R.id.btn_long_press:
@@ -84,12 +87,9 @@ public class MainActivity extends Activity {
         findViewById(R.id.generate_qr_code).setOnClickListener(onClickListener);
         findViewById(R.id.btn_long_press).setOnClickListener(onClickListener);
 
-        ivQrImage.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                longPress();
-                return false;
-            }
+        ivQrImage.setOnLongClickListener(v -> {
+            longPress();
+            return false;
         });
     }
 
@@ -117,18 +117,30 @@ public class MainActivity extends Activity {
 
             //保存图片到本地
             @Override
-            public void onSaveImageClick() {
-                View view = getWindow().getDecorView().getRootView();//找到当前页面的根布局
-                view.setDrawingCacheEnabled(true);//禁用绘图缓存
-                view.buildDrawingCache();
+            public boolean onSaveImageClick() {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    intent.setData(Uri.parse("package:" + getPackageName()));
+                    startActivityForResult(intent, 111);
+                    return false;
+                } else {
+//                    View view = getWindow().getDecorView().getRootView();//找到当前页面的根布局
+//                    view.setDrawingCacheEnabled(true);//禁用绘图缓存
+//                    view.buildDrawingCache();
 
-                Bitmap temBitmap = view.getDrawingCache();
-                ImageUtil.savePicToLocal(temBitmap, MainActivity.this);
+                    final View qrView = findViewById(R.id.iv_qr_image);
+                    qrView.setDrawingCacheEnabled(true);//禁用绘图缓存
+                    qrView.buildDrawingCache();
 
-                //禁用DrawingCahce否则会影响性能 ,而且不禁止会导致每次截图到保存的是缓存的位图
-                view.setDrawingCacheEnabled(false);//识别完成之后开启绘图缓存
+                    Bitmap temBitmap = qrView.getDrawingCache();
+                    ImageUtil.savePicToLocal(temBitmap, MainActivity.this);
 
-                showToast("保存图片到本地成功");
+                    //禁用DrawingCahce否则会影响性能 ,而且不禁止会导致每次截图到保存的是缓存的位图
+                    qrView.setDrawingCacheEnabled(false);//识别完成之后开启绘图缓存
+
+                    showToast("保存图片到本地成功");
+                    return true;
+                }
             }
         });
         imageOptDialog.show();
